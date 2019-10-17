@@ -1,39 +1,55 @@
-from gensim.corpora.wikicorpus import WikiCorpus
-from nltk.tokenize import sent_tokenize
+import re
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.stem import WordNetLemmatizer
+from gensim.corpora import WikiCorpus, MmCorpus, Dictionary
+import pickle
 
-class LoadWiki:
-    def __init__(self, link):
-        self.link = link
-        self.wiki = WikiCorpus(self.link, tokenizer_func=self.tokenize, processes=7)
-        print('here')
-        # self.wiki = WikiCorpus.load('data/wiki_model.dict')
-        self.wiki.save('data/wiki_model_sents.dict')
-        self.num_docs = 0
-        self.output_file = 'data/wiki_corpus.txt'
+class LoadWikiCorpus:
+    def __init__(self):
+        self.stop_words = set(stopwords.words('english'))
+        self.lemmatizer = WordNetLemmatizer()
+        self.wiki = wiki = WikiCorpus('data/simplewiki-latest-pages-articles.xml.bz2', tokenizer_func=tokenize)
+        self.wiki.metadata = True
+        self.sents = self.get_sents(1000)
+        self.save_list(self.sents, 'data/sents.pkl')
+        self.token_sents = self.tokenize_sents(self.sents)
+        self.save_list(self.token_sents, 'data/token_sents.pkl')
 
-    def load_text(self, text):
-        return ' '.join([t.decode("utf-8") for t in text])
+    def get_first_paragraph(self, sents):
+        s = []
+        i = 0
+        while (sents[i][0] != '=') and (i < len(sents) - 1):
+            s.append(sents[i])
+            i += 1
+        return s
 
-    def write_file(self, t, output_write):
-#        text = self.load_text(t)
-        output_write.write('\n'.join(t))
-        self.num_docs += 1
-        if self.num_docs % 100 == 0:
-            print(f'{self.num_docs} processed. ')
-        return t
+    def get_sents(self, num_articles):
+        s = []
+        i = 0
+        for t in self.wiki.get_texts():
+            title = t[1][1]
+            content = t[0]
+            sents = self.get_first_paragraph(content)
+            clean_sents = [re.sub(r'[^\w\s]', '', sent) + '.' for sent in sents]
+            s.extend([(title, sent) for sent in clean_sents])
+            i += 1
+            if i > num_articles:
+                break
+        return s
 
-    def tokenize(self, text, token_min_len, token_max_len, lower):
-        # override original method in wikicorpus.py
-        return [token for token in sent_tokenize(text)
-                if len(token) >= 20 and not token.startswith('_')]
+    def tokenize_sentence(self, sentence, stop_words, lemmatizer=None):
+        sentence = re.sub(r'[^\w\s]', '', sentence.lower())
+        tokens = [w for w in word_tokenize(sentence) if not w in stop_words and len(w) > 2]
+        if lemmatizer:
+            tokens = [self.lemmatizer.lemmatize(t) for t in tokens]
+        return tokens
 
-    def load_corpus(self):
-        output_write = open(self.output_file, 'w')
-        wiki_corp = [self.write_file(t, output_write) for t in self.wiki.get_texts()]
-        output_write.close()
-        return wiki_corp
+    def tokenize_sents(self, sents):
+        return [(self.tokenize_sentence(s[1], self.stop_words, self.lemmatizer)) for s in sents]
+
+    def save_list(self, list_input, output_path):
+        with open(output_path, 'wb') as fb:
+            pickle.dump(list_input, fb)
 
 
-if __name__ == '__main__':
-    wiki = LoadWiki('data/simplewiki-latest-pages-articles.xml.bz2')
-    wiki.load_corpus()
