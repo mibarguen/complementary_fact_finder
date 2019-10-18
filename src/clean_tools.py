@@ -3,7 +3,7 @@
 """
 
 import json
-from nltk import word_tokenize, sent_tokenize
+from nltk import word_tokenize, sent_tokenize, pos_tag
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 import re
@@ -88,4 +88,51 @@ def get_average_word_vectors_features_list(tokenized_list,nlp):
     if n != 0:
         feature /= n
     return feature
+
+
+def get_keywords_for_essays(student_file,out_file):
+    """ Gets keywords for each student text and saves them to a json file. Stopwords removed.
+    """
+    all_features = []
+    text_file = open(student_file)
+    texts_list = json.load(text_file)
+    wordnet_lemmatizer = WordNetLemmatizer()
+    stop_words = set(stopwords.words('english'))
+    for text_dict in texts_list:
+        raw_text = text_dict['plaintext']
+        tokens = word_tokenize(raw_text)
+        pos_tokens = pos_tag(tokens)
+        keep_tokens = [(token_tup[0]).lower() for token_tup in pos_tokens if (("NN" in token_tup[1] or "VB" in token_tup[1]) and (token_tup[0]).lower() not in stop_words)]
+        keep_tokens = [wordnet_lemmatizer.lemmatize(token) for token in keep_tokens]
+        all_features.append(keep_tokens)
+    
+    with open(out_file, 'w') as outfile: # saving the features
+        wiki_keywords = json.dump(all_features, outfile)
+
+
+def get_keywords_for_wiki(wiki_file,out_file):
+    """ Gets keywords for all of the wiki articles and saves them to a json file. Stopwords removed.
+    """
+    all_features = []
+    wordnet_lemmatizer = WordNetLemmatizer()
+    stop_words = set(stopwords.words('english'))
+    with open(wiki_file,"rb") as afile:
+        data_lines = pickle.load(afile)
+    for i in range(len(data_lines)):
+        sent = data_lines[i][1]
+        sent_keywords = get_keywords_from_sentence(sent,wordnet_lemmatizer,stop_words)
+        all_features.append(sent_keywords)
+    assert(len(all_features) == len(data_lines))
+    with open(out_file, 'w') as outfile: # saving the features
+        json.dump(all_features, outfile)
+
+
+def get_keywords_from_sentence(sent,wordnet_lemmatizer,stop_words):
+    """ Gets the keywords from a given sentence, defined as Nouns and Verbs, and lemamtizing them
+    """
+    tokens = word_tokenize(sent)
+    pos_tokens = pos_tag(tokens)
+    keep_tokens = [(token_tup[0]).lower() for token_tup in pos_tokens if (("NN" in token_tup[1] or "VB" in token_tup[1]) and (token_tup[0]).lower() not in stop_words)]
+    keep_tokens = [wordnet_lemmatizer.lemmatize(token) for token in keep_tokens]
+    return keep_tokens
 

@@ -27,10 +27,10 @@ def get_top_wiki_sentences_ensemble():
     pass
 
 
-def get_word_vec_top_sentences(sentence_vec,wiki_fpath,num_output=10):
+def get_word_vec_top_sentences(block_vec,wiki_fpath,num_output=10):
     """ Takes in a sentence and returns the most similar sentences within the wikipedia corpus.
     args:
-        sentence_vec (np.array): shape(300,), average word embeddings for a sentence 
+        block_vec (np.array): shape(300,), average word embeddings for a block of text
         wiki_fpath (str): path to the wikipedia json file holding embeddings
         num_output (int): number of best indices w/ scores to return
     """
@@ -41,9 +41,28 @@ def get_word_vec_top_sentences(sentence_vec,wiki_fpath,num_output=10):
             wiki_data.append(np.array(line))
 
     wiki_array = np.array(wiki_data)
-    euclidian = np.sqrt(np.sum(np.square(wiki_array-sentence_vec),axis=1)) # distance
+    euclidian = np.sqrt(np.sum(np.square(wiki_array-block_vec),axis=1)) # distance
     euclidian_list = list(euclidian)
     euclid_text = [(i,euclidian_list[i]) for i in range(len(euclidian_list))] # index of text & score
     euclid_text.sort(key=lambda tup: tup[1])
     return euclid_text[:num_output]
+
+
+def get_(wiki_keyword_path,text_keywords,num_output=10):
+    """ Returns the wiki sentences that have the most common keywords in common with a given sentence.
+    args:
+        wiki_keyword_path: path to the wikipedia keyword
+        text_keywords: list of keywords (nouns and verbs) for a given text block
+    """
+    text_keywords = set(text_keywords)
+    with open(wiki_keyword_path) as afile:
+        wiki_keywords = json.load(afile)
+    data_scores = []
+    for i in range(len(wiki_keywords)):
+        kw_set = set(wiki_keywords[i])
+        n = len(kw_set)
+        score = len(student_set.intersection(kw_set))/max(n,1)
+        data_scores.append((i,score))
+    data_scores.sort(key=lambda tup: tup[1], reverse=True)
+    return data_scores[:num_output]
 
