@@ -61,7 +61,7 @@ def average_word_vectors_feature_extractor(tokenized_file,out_file):
     all_features = []
     for word_list in wiki_data:
         feature = get_average_word_vectors_features_list(word_list,nlp)
-        all_features.append(feature)
+        all_features.append(list(feature))
 
     assert(len(all_features)==len(wiki_data))
     with open(out_file, 'w') as outfile: # saving the features
@@ -74,7 +74,6 @@ def get_average_word_vectors_features_list(tokenized_list,nlp):
         tokenized_list: tokenized list of words
         nlp: language model
     """
-    print("hello")
     n=0
     feature = np.zeros((300,))
     for word in tokenized_list:
