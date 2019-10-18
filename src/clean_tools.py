@@ -12,7 +12,6 @@ import spacy
 import numpy as np
 from spellchecker import SpellChecker
 
-# "../../csc482_project_1/tai-documents-v3/tai-documents-v3.json"
 def load_student_text(file_path, remove_bad_punc=False):
     """ Loads in the student text and returns a list of documents for each essay 
     args:
@@ -49,15 +48,19 @@ def tokenize_sentence(sentence, stop_words, lemmatizer=None):
     return tokens
 
 
-def average_word_vectors_feature_extractor(tokenized_file,out_file):
+def average_word_vectors_feature_extractor(tokenized_file,out_file,pickle=True):
     """ Running through tokenized wiki sentences and calling feature engineering process. Saves engineered features to disk.
     args:
         tokenized_file: path to the json file of tokenized sentences
         out_file: path for saving the engineered features
+        pickle (bool): True if pickle file, False if json
     """ 
     nlp = spacy.load("en_core_web_lg")
     with open(tokenized_file, 'rb') as data_file:
-        wiki_data = pickle.load(data_file)
+        if pickle:
+            wiki_data = pickle.load(data_file)
+        else:
+            wiki_data = json.load(data_file)
     all_features = []
     for word_list in wiki_data:
         feature = get_average_word_vectors_features_list(word_list,nlp)
@@ -85,14 +88,4 @@ def get_average_word_vectors_features_list(tokenized_list,nlp):
     if n != 0:
         feature /= n
     return feature
-
-
-
-
-
-
-
-
-
-
 
