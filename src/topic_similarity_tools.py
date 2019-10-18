@@ -54,7 +54,7 @@ def get_keyword_top_sentences(wiki_keyword_path,text_keywords,num_output=10):
         wiki_keyword_path: path to the wikipedia keyword
         text_keywords: list of keywords (nouns and verbs) for a given text block
     """
-    text_keywords = set(text_keywords)
+    student_set = set(text_keywords)
     with open(wiki_keyword_path) as afile:
         wiki_keywords = json.load(afile)
     data_scores = []
