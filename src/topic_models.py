@@ -1,9 +1,11 @@
 from gensim.corpora import Dictionary
-import pickle
-import json
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
+import re
 
 from gensim.models import TfidfModel, LsiModel, LdaModel
 from gensim.similarities import MatrixSimilarity
+from src.clean_tools import *
 
 
 class WikiModel:
@@ -14,6 +16,8 @@ class WikiModel:
         self.wiki_dict = Dictionary(self.wiki_tokens)
         self.wiki_corpus = [self.wiki_dict.doc2bow(t) for t in self.wiki_tokens]
         self.student_tokens = self.load_student(student_tokens_path)
+        self.lemmatizer = WordNetLemmatizer()
+        self.stop_words = stopwords
 
     def load_wiki(self, filepath):
         with open(filepath, 'rb') as f:
@@ -22,6 +26,12 @@ class WikiModel:
     def load_student(self, filepath):
         with open(filepath, 'rb') as f:
             return json.load(f)
+
+    def get_keywords(self, essay):
+        # remove punctuation.
+        essay_clean = re.sub(r'[^\w\s]', '', essay)
+        return get_keywords_from_sentence(essay_clean, self.lemmatizer, self.stop_words)
+
 
 
 class LsiWikiModel(WikiModel):
