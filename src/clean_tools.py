@@ -1,4 +1,5 @@
-""" Helper functions for cleaning the data.
+""" Helper functions for cleaning the data. 
+    Also handles saving post-engineered features to disk.
 """
 
 import json
@@ -6,10 +7,13 @@ from nltk import word_tokenize, sent_tokenize
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 import re
+import pickle
+import spacy
+import numpy as np
 from spellchecker import SpellChecker
 
 # "../../csc482_project_1/tai-documents-v3/tai-documents-v3.json"
-def load_student_text(file_path, remove_bad_punc=True):
+def load_student_text(file_path, remove_bad_punc=False):
     """ Loads in the student text and returns a list of documents for each essay 
     args:
         file_path (str): path to the student json
@@ -34,6 +38,7 @@ def load_student_text(file_path, remove_bad_punc=True):
         all_student_words.append(all_words)
     return all_student_words
 
+
 def tokenize_sentence(sentence, stop_words, lemmatizer=None):
     """ Returns the tokens for a sentence as a list.
     """
@@ -42,3 +47,52 @@ def tokenize_sentence(sentence, stop_words, lemmatizer=None):
     if lemmatizer is not None:
         tokens = [lemmatizer.lemmatize(t) for t in tokens]
     return tokens
+
+
+def average_word_vectors_feature_extractor(tokenized_file,out_file):
+    """ Running through tokenized wiki sentences and calling feature engineering process. Saves engineered features to disk.
+    args:
+        tokenized_file: path to the json file of tokenized sentences
+        out_file: path for saving the engineered features
+    """ 
+    nlp = spacy.load("en_core_web_lg")
+    with open(tokenized_file, 'rb') as data_file:
+        wiki_data = pickle.load(data_file)
+    all_features = []
+    for word_list in wiki_data:
+        feature = get_average_word_vectors_features_list(word_list,nlp)
+        all_features.append(list(feature))
+
+    assert(len(all_features)==len(wiki_data))
+    with open(out_file, 'w') as outfile: # saving the features
+        json.dump(all_features, outfile)
+    
+
+def get_average_word_vectors_features_list(tokenized_list,nlp):
+    """ Creates features for each of the wiki sentences using average word embeddings. Word2Vec.
+    args:
+        tokenized_list: tokenized list of words
+        nlp: language model
+    """
+    n=0
+    feature = np.zeros((300,))
+    for word in tokenized_list:
+        token = nlp(word)
+        if token.has_vector:
+            n += 1
+            feature += token.vector
+            assert(feature.shape==(300,))
+    if n != 0:
+        feature /= n
+    return feature
+
+
+
+
+
+
+
+
+
+
+
