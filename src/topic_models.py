@@ -8,7 +8,7 @@ from gensim.similarities import MatrixSimilarity
 
 class WikiModel:
     def __init__(self, wiki_tokens_path='data/token_sents.pkl', wiki_sents_path='data/sents.pkl',
-                 student_tokens_path='data/data.json'):
+                 student_tokens_path='data/children_data.json'):
         self.wiki_tokens = self.load_wiki(wiki_tokens_path)
         self.wiki_sents = self.load_wiki(wiki_sents_path)
         self.wiki_dict = Dictionary(self.wiki_tokens)
