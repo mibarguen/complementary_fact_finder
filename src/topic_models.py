@@ -17,7 +17,7 @@ class WikiModel:
         self.wiki_corpus = [self.wiki_dict.doc2bow(t) for t in self.wiki_tokens]
         self.student_tokens = self.load_student(student_tokens_path)
         self.lemmatizer = WordNetLemmatizer()
-        self.stop_words = stopwords
+        self.stop_words = set(stopwords.words('english'))
 
     def load_wiki(self, filepath):
         with open(filepath, 'rb') as f:
@@ -31,7 +31,6 @@ class WikiModel:
         # remove punctuation.
         essay_clean = re.sub(r'[^\w\s]', '', essay)
         return get_keywords_from_sentence(essay_clean, self.lemmatizer, self.stop_words)
-
 
 
 class LsiWikiModel(WikiModel):
@@ -48,27 +47,32 @@ class LsiWikiModel(WikiModel):
         return lsi
 
     def predict_lsi(self, text, num_results=10, print_results=True):
+        print(text)
         vec_bow = self.wiki_tfidf[self.wiki_dict.doc2bow(text)]
         vec_lsi = self.lsi[vec_bow]
         sims = self.lsi_index[vec_lsi]
         sorted_sims = sorted(enumerate(sims), key=lambda item: -item[1])
         preds = [(index, score) for index, score in sorted_sims[:num_results]]
         if print_results:
-            print(' '.join(text))
-            print('\n\n')
-            print('Results: \n')
             for i in self.string_preds(preds):
-                print(f'Score: {round(i[1], 3)}')
-                print(i[0])
+                # print(f'Score: {round(i[1], 3)}')
+                print('Topic: ', i[0][0])
+                print(i[0][1].replace('\n', ''))
+                print()
         return preds
 
     def string_preds(self, preds):
         string_results = [(self.wiki_sents[pred[0]], pred[1]) for pred in preds]
+
         return string_results
 
     def predict_lsi_index(self, student_index, num_results=10, print_results=True):
         text = self.student_tokens[student_index]
         return self.predict_lsi(text, num_results, print_results)
+
+    def predict_input(self, essay):
+        essay_tokens = self.get_keywords(essay)
+        self.predict_lsi(essay_tokens)
 
 
 class LdaWikiModel(WikiModel):
