@@ -10,7 +10,7 @@ import re
 import pickle
 import spacy
 import numpy as np
-from spellchecker import SpellChecker
+# from spellchecker import SpellChecker
 
 def load_student_text(file_path, remove_bad_punc=False):
     """ Loads in the student text and returns a list of documents for each essay 
@@ -22,7 +22,7 @@ def load_student_text(file_path, remove_bad_punc=False):
     texts_list = json.load(text_file)
     wordnet_lemmatizer = WordNetLemmatizer()
     stop_words = set(stopwords.words('english'))
-    spell = SpellChecker()
+    # spell = SpellChecker()
     all_student_words = [] # stores list of tokens for each sentence
     for text_dict in texts_list:
         raw_text = text_dict['plaintext']
@@ -30,8 +30,8 @@ def load_student_text(file_path, remove_bad_punc=False):
         all_words = []
         for sent in sents:
             sent_tokens = tokenize_sentence(sent,stop_words,wordnet_lemmatizer)
-            if remove_bad_punc:
-                sent_tokens = [token for token in sent_tokens if len(spell.unknown([token]))==0]
+            #if remove_bad_punc:
+            #    sent_tokens = [token for token in sent_tokens if len(spell.unknown([token]))==0]
             all_words += sent_tokens
 
         all_student_words.append(all_words)
