@@ -25,7 +25,8 @@ class WikiModel:
 
 
 class LsiWikiModel(WikiModel):
-    def __init__(self, num_topics=100):
+    def __init__(self, num_topics=100, wiki_tokens_path='data/token_sents.pkl', wiki_sents_path='data/sents.pkl',
+                 student_tokens_path='data/children_data.json'):
         super().__init__()
         self.wiki_tfidf = TfidfModel(self.wiki_corpus, id2word=self.wiki_dict)
         self.wiki_tfidf_corpus = self.wiki_tfidf[self.wiki_corpus]
@@ -61,8 +62,9 @@ class LsiWikiModel(WikiModel):
 
 
 class LdaWikiModel(WikiModel):
-    def __init__(self, num_topics=100):
-        super().__init__()
+    def __init__(self, num_topics=100, wiki_tokens_path='data/token_sents.pkl', wiki_sents_path='data/sents.pkl',
+                 student_tokens_path='data/children_data.json'):
+        super().__init__(wiki_tokens_path, wiki_sents_path, student_tokens_path)
         self.lda = self.compute_lda(num_topics)
         self.lda_index = MatrixSimilarity(self.lda[self.wiki_corpus])
 
@@ -92,3 +94,9 @@ class LdaWikiModel(WikiModel):
     def predict_lda_index(self, student_index, num_results=10, print_results=True):
         text = self.student_tokens[student_index]
         return self.predict_lda(text, num_results, print_results)
+
+    def get_perplexity(self, text):
+        vec_bow = self.wiki_dict.doc2bow(text)
+        vec_lda = self.lda[vec_bow]
+        return self.lda.get_document_topics(vec_bow)
+
