@@ -48,7 +48,7 @@ def get_word_vec_top_sentences(block_vec,wiki_fpath,num_output=10):
     return euclid_text[:num_output]
 
 
-def get_(wiki_keyword_path,text_keywords,num_output=10):
+def get_keyword_top_sentences(wiki_keyword_path,text_keywords,num_output=10):
     """ Returns the wiki sentences that have the most common keywords in common with a given sentence.
     args:
         wiki_keyword_path: path to the wikipedia keyword
