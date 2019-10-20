@@ -36,7 +36,7 @@ class WikiModel:
 class LsiWikiModel(WikiModel):
     def __init__(self, num_topics=100, wiki_tokens_path='data/token_sents.pkl', wiki_sents_path='data/sents.pkl',
                  student_tokens_path='data/children_data.json'):
-        super().__init__()
+        super().__init__(wiki_tokens_path, wiki_sents_path, student_tokens_path)
         self.wiki_tfidf = TfidfModel(self.wiki_corpus, id2word=self.wiki_dict)
         self.wiki_tfidf_corpus = self.wiki_tfidf[self.wiki_corpus]
         self.lsi = self.compute_lsi(num_topics)

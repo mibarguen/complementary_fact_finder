@@ -22,5 +22,5 @@ def main(model):
 
 if __name__ == '__main__':
     print('Initializing model...')
-    lsi_wiki = LsiWikiModel(student_tokens_path='data/student_keywords.json', wiki_tokens_path='data/wiki_keywords.pkl')
+    lsi_wiki = LdaWikiModel(student_tokens_path='data/student_keywords.json', wiki_tokens_path='data/wiki_keywords.pkl')
     main(lsi_wiki)
