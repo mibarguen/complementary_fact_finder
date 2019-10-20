@@ -1,8 +1,5 @@
 from gensim.corpora import Dictionary
-from nltk.stem import WordNetLemmatizer
-from nltk.corpus import stopwords
-import re
-
+from src.clean_text import TextCleaner
 from gensim.models import TfidfModel, LsiModel, LdaModel
 from gensim.similarities import MatrixSimilarity
 from src.clean_tools import *
@@ -18,6 +15,7 @@ class WikiModel:
         self.student_tokens = self.load_student(student_tokens_path)
         self.lemmatizer = WordNetLemmatizer()
         self.stop_words = set(stopwords.words('english'))
+        self.clean_text = TextCleaner()
 
     def load_wiki(self, filepath):
         with open(filepath, 'rb') as f:
@@ -47,7 +45,6 @@ class LsiWikiModel(WikiModel):
         return lsi
 
     def predict_lsi(self, text, num_results=10, print_results=True):
-        print(text)
         vec_bow = self.wiki_tfidf[self.wiki_dict.doc2bow(text)]
         vec_lsi = self.lsi[vec_bow]
         sims = self.lsi_index[vec_lsi]
@@ -57,7 +54,8 @@ class LsiWikiModel(WikiModel):
             for i in self.string_preds(preds):
                 # print(f'Score: {round(i[1], 3)}')
                 print('Topic: ', i[0][0])
-                print(i[0][1].replace('\n', ''))
+                print(self.most_important_sent(i[0][1]))
+                #print(i[0][1].replace('\n', ''))
                 print()
         return preds
 
@@ -73,6 +71,19 @@ class LsiWikiModel(WikiModel):
     def predict_input(self, essay):
         essay_tokens = self.get_keywords(essay)
         self.predict_lsi(essay_tokens)
+
+    def tfidf_score_sent(self, sent):
+        return np.sum([t[1] for t in self.wiki_tfidf[
+            self.wiki_dict.doc2bow(self.clean_text.get_keywords_from_sentence(sent))]])
+
+    def most_important_sent(self, article_sents):
+        tfidf_scores = np.array([self.tfidf_score_sent(s) for s in article_sents])
+        return self.process_sent(article_sents[np.argmax(tfidf_scores)])
+
+    def process_sent(self, sent):
+        clean_sent = re.sub(r'[^\w\s.:]', '', sent)
+        return clean_sent
+
 
 
 class LdaWikiModel(WikiModel):
@@ -108,9 +119,4 @@ class LdaWikiModel(WikiModel):
     def predict_lda_index(self, student_index, num_results=10, print_results=True):
         text = self.student_tokens[student_index]
         return self.predict_lda(text, num_results, print_results)
-
-    def get_perplexity(self, text):
-        vec_bow = self.wiki_dict.doc2bow(text)
-        vec_lda = self.lda[vec_bow]
-        return self.lda.get_document_topics(vec_bow)
 
