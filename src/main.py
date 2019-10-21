@@ -3,7 +3,7 @@ import re
 
 
 def main(model):
-    print("Write 'exit' to escape program. Type --facts after you have written your essay to get results.")
+    print("Write 'exit' to escape program. Press enter and type '--facts' after you have written your essay to get results.")
     n = input("Copy-paste your essay here:    ")
     while True:
         current_input = input()
@@ -12,8 +12,7 @@ def main(model):
             break
         elif '--facts' in current_input:
             print('Finding Facts... ')
-
-            print('Here are some facts we think would make your essay more detailed. ')
+            print('\nHere are some facts we think would make your essay more detailed.\n')
             n = re.sub(r'--facts', '', n)
             model.predict_input(n)
             print( "\n\nTo escape, type 'exit' or to find more facts from another essay, copy-paste your essay here and type --facts to get suggested facts:   ")
