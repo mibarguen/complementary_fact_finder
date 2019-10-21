@@ -11,7 +11,7 @@ def main(model):
         if current_input.lower() == 'exit':
             break
         elif '--facts' in current_input:
-            print('Finding Facts... ')
+            print('\nFinding Facts... ')
             print('\nHere are some facts we think would make your essay more detailed.\n')
             n = re.sub(r'--facts', '', n)
             model.predict_input(n)

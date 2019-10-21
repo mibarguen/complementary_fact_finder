@@ -3,6 +3,7 @@ from src.clean_text import TextCleaner
 from gensim.models import TfidfModel, LsiModel, LdaModel
 from gensim.similarities import MatrixSimilarity
 from src.clean_tools import *
+from abc import abstractmethod
 
 
 class WikiModel:
@@ -16,6 +17,8 @@ class WikiModel:
         self.lemmatizer = WordNetLemmatizer()
         self.stop_words = set(stopwords.words('english'))
         self.clean_text = TextCleaner()
+        self.wiki_tfidf = TfidfModel(self.wiki_corpus, id2word=self.wiki_dict)
+        self.wiki_tfidf_corpus = self.wiki_tfidf[self.wiki_corpus]
 
     def load_wiki(self, filepath):
         with open(filepath, 'rb') as f:
@@ -30,13 +33,43 @@ class WikiModel:
         essay_clean = re.sub(r'[^\w\s]', '', essay)
         return get_keywords_from_sentence(essay_clean, self.lemmatizer, self.stop_words)
 
+    def string_preds(self, preds):
+        string_results = [(self.wiki_sents[pred[0]], pred[1]) for pred in preds]
+        return string_results
+
+    def process_sent(self, sent):
+        clean_sent = re.sub(r'[^\w\s.:]', '', sent)
+        return clean_sent
+
+    def most_important_sent(self, article_sents):
+        tfidf_scores = np.array([self.tfidf_score_sent(s) for s in article_sents])
+        return self.process_sent(article_sents[np.argmax(tfidf_scores)])
+
+    def predict_input(self, essay):
+        essay_tokens = self.get_keywords(essay)
+        self.predict(essay_tokens)
+
+    def tfidf_score_sent(self, sent):
+        return np.sum([t[1] for t in self.wiki_tfidf[
+            self.wiki_dict.doc2bow(self.clean_text.get_keywords_from_sentence(sent))]])
+
+    def most_important_sent(self, article_sents):
+        tfidf_scores = np.array([self.tfidf_score_sent(s) for s in article_sents])
+        return self.process_sent(article_sents[np.argmax(tfidf_scores)])
+
+    @abstractmethod
+    def predict(self, text, num_results=10, print_results=True):
+        pass
+
+    @abstractmethod
+    def predict_index(self, text, num_results=10, print_results=True):
+        pass
+
 
 class LsiWikiModel(WikiModel):
     def __init__(self, num_topics=100, wiki_tokens_path='data/token_sents.pkl', wiki_sents_path='data/sents.pkl',
                  student_tokens_path='data/children_data.json'):
         super().__init__(wiki_tokens_path, wiki_sents_path, student_tokens_path)
-        self.wiki_tfidf = TfidfModel(self.wiki_corpus, id2word=self.wiki_dict)
-        self.wiki_tfidf_corpus = self.wiki_tfidf[self.wiki_corpus]
         self.lsi = self.compute_lsi(num_topics)
         self.lsi_index = MatrixSimilarity(self.lsi[self.wiki_tfidf_corpus])
 
@@ -44,7 +77,7 @@ class LsiWikiModel(WikiModel):
         lsi = LsiModel(self.wiki_tfidf_corpus, num_topics=num_topics, id2word=self.wiki_dict)
         return lsi
 
-    def predict_lsi(self, text, num_results=10, print_results=True):
+    def predict(self, text, num_results=10, print_results=True):
         vec_bow = self.wiki_tfidf[self.wiki_dict.doc2bow(text)]
         vec_lsi = self.lsi[vec_bow]
         sims = self.lsi_index[vec_lsi]
@@ -59,35 +92,13 @@ class LsiWikiModel(WikiModel):
                 print()
         return preds
 
-    def string_preds(self, preds):
-        string_results = [(self.wiki_sents[pred[0]], pred[1]) for pred in preds]
-
-        return string_results
-
-    def predict_lsi_index(self, student_index, num_results=10, print_results=True):
+    def predict_index(self, student_index, num_results=10, print_results=True):
         text = self.student_tokens[student_index]
-        return self.predict_lsi(text, num_results, print_results)
-
-    def predict_input(self, essay):
-        essay_tokens = self.get_keywords(essay)
-        self.predict_lsi(essay_tokens)
-
-    def tfidf_score_sent(self, sent):
-        return np.sum([t[1] for t in self.wiki_tfidf[
-            self.wiki_dict.doc2bow(self.clean_text.get_keywords_from_sentence(sent))]])
-
-    def most_important_sent(self, article_sents):
-        tfidf_scores = np.array([self.tfidf_score_sent(s) for s in article_sents])
-        return self.process_sent(article_sents[np.argmax(tfidf_scores)])
-
-    def process_sent(self, sent):
-        clean_sent = re.sub(r'[^\w\s.:]', '', sent)
-        return clean_sent
-
+        return self.predict(text, num_results, print_results)
 
 
 class LdaWikiModel(WikiModel):
-    def __init__(self, num_topics=100, wiki_tokens_path='data/token_sents.pkl', wiki_sents_path='data/sents.pkl',
+    def __init__(self, num_topics=16, wiki_tokens_path='data/token_sents.pkl', wiki_sents_path='data/sents.pkl',
                  student_tokens_path='data/children_data.json'):
         super().__init__(wiki_tokens_path, wiki_sents_path, student_tokens_path)
         self.lda = self.compute_lda(num_topics)
@@ -97,7 +108,7 @@ class LdaWikiModel(WikiModel):
         lda = LdaModel(self.wiki_corpus, num_topics=num_topics, id2word=self.wiki_dict)
         return lda
 
-    def predict_lda(self, text, num_results=10, print_results=True):
+    def predict(self, text, num_results=10, print_results=True):
         vec_bow = self.wiki_dict.doc2bow(text)
         vec_lda = self.lda[vec_bow]
         sims = self.lda_index[vec_lda]
@@ -108,15 +119,12 @@ class LdaWikiModel(WikiModel):
             print('\n\n')
             print('Results: \n')
             for i in self.string_preds(preds):
-                print(f'Score: {round(i[1], 3)}')
-                print(i[0])
+                print('Topic: ', i[0][0])
+                print(self.most_important_sent(i[0][1]))
+                print()
         return preds
 
-    def string_preds(self, preds):
-        string_results = [(self.wiki_sents[pred[0]], pred[1]) for pred in preds]
-        return string_results
-
-    def predict_lda_index(self, student_index, num_results=10, print_results=True):
+    def predict_index(self, student_index, num_results=10, print_results=True):
         text = self.student_tokens[student_index]
-        return self.predict_lda(text, num_results, print_results)
+        return self.predict(text, num_results, print_results)
 

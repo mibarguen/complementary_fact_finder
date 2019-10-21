@@ -54,6 +54,7 @@ horridus skeleton mounted with modern limbposture Natural History Museum of Los 
 
 After you have received your facts, you may write another essay or escape the program by typing `exit`.
 
+![](example_facts.gif)
 
 #### Intention
 We aim to create a tool which provides interesting facts that are highly personalized to the subjects that students write about on their papers. These facts will motivate students to do more in-depth research about topics that would complement their essays.
