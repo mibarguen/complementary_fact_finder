@@ -74,3 +74,8 @@ In order to improve their writing skills, students should include interesting fa
 ### Data
 You may download the Simple English Wikipedia corpus in the following website: https://dumps.wikimedia.org/simplewiki/latest/. 
 The file we used is called: `simplewik-latest-pages-articles.xml.bz2`.
+
+### Report
+In order to view the full report, please reference the file in this directory named: `Complementary Fact-Finder.pdf`. 
+
+
