@@ -2,7 +2,12 @@
 ### Project 1 Proposal: Fact-Retrieval
 
 ### Instructions
-> Before running our project, make sure you have the following files under the data directory. If you don't have these files, find the instructions below to install them. 
+> Unzip `data.zip`:
+```
+unzip data.zip
+```
+
+> Before running our project, make sure you have the following files under the data directory. 
 - articles.pkl
 - articles_keywords.pkl
 - student_keywords.json
